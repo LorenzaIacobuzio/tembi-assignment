@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: tembi_root_pass
+          MYSQL_DATABASE: tembi
+          MYSQL_USER: tembi_user
+          MYSQL_PASSWORD: tembi_pass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -ptembi_root_pass"
+          --health-interval=5s
+          --health-timeout=2s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      - name: Wait for MySQL
+        run: |
+          for i in {1..30}; do mysql -h 127.0.0.1 -P 3306 -u root -ptembi_root_pass -e "SELECT 1" && break || sleep 1; done
+      - name: Run tests
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: tembi_user
+          DB_PASS: tembi_pass
+          DB_NAME: tembi
+        run: pytest -q

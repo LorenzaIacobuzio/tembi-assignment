@@ -1,0 +1,61 @@
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-tembi_root_pass}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-tembi}
+      MYSQL_USER: ${MYSQL_USER:-tembi_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-tembi_pass}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  scraper:
+    build: .
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=${MYSQL_USER:-tembi_user}
+      - DB_PASS=${MYSQL_PASSWORD:-tembi_pass}
+      - DB_NAME=${MYSQL_DATABASE:-tembi}
+    volumes:
+      - ./:/app
+    command: bash -c "python scripts/wait_for_db.py && python src/scraper/main.py"
+
+  api:
+    build: .
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=${MYSQL_USER:-tembi_user}
+      - DB_PASS=${MYSQL_PASSWORD:-tembi_pass}
+      - DB_NAME=${MYSQL_DATABASE:-tembi}
+    volumes:
+      - ./:/app
+    ports:
+      - "8000:8000"
+    command: bash -c "python scripts/wait_for_db.py && python src/api/app.py"
+
+  migrations:
+    build: .
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=${MYSQL_USER:-tembi_user}
+      - DB_PASS=${MYSQL_PASSWORD:-tembi_pass}
+      - DB_NAME=${MYSQL_DATABASE:-tembi}
+    volumes:
+      - ./:/app
+    working_dir: /app
+    command: bash -c "python scripts/wait_for_db.py && alembic upgrade head"
+
+volumes:
+  db_data:

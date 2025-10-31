@@ -1,0 +1,5 @@
+.idea/
+src/__pycache__/
+src/database/__pycache__/
+src/scraper/__pycache__/
+src/tests/__pycache__/
