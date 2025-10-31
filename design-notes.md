@@ -18,6 +18,7 @@
 - **Partitions**: Cache partition can be done by region if market insights based on country are needed
 - **Batch processing**: When scrapers scale, inserts can overload db. If scrapers write to queue (Kafka), then a batching service collects messages and performs batch inserts on db
 - **Workflows**: Add GH workflow for Dockerizing app and pushing to registry
+- **Repo**: Repo main is not protected but it should, so when opening new PR the lint and test GH workflows would run as pipeline
 
 ## Personal consideration
 I have worked on this much more than 2-3h, because the constraints were strict, 
